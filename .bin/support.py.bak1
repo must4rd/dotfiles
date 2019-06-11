@@ -1,0 +1,67 @@
+import gi
+import os
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+from gi.repository import Gdk
+import subprocess
+
+class MyWindow(Gtk.Window):
+
+#     key = Gdk.KEY_h
+#     key = Gdk.KEY_j
+#     key = Gdk.KEY_k
+#     key = Gdk.KEY_l
+    
+
+    def __init__(self):
+        # init the base class (Gtk.Window)
+        super().__init__()
+        Gtk.Window.__init__(self, "Support")
+        self.set_border_width(2);
+        
+        outerbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing =6)
+
+        listbox = Gtk.ListBox()
+        listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        outerbox.pack_start(listbox, True, True, 0)
+
+        # Tell Gtk what to do when the window is closed (in this case quit the main loop)
+        self.connect("delete-event", Gtk.main_quit)
+
+        # handler when any key is pressed
+        self.connect("key-press-event",self.on_key_press_event)
+
+        # My Labels 
+        instruct = Gtk.Label("j Password with click"  )
+        listbox.add(instruct)
+        instruct = Gtk.Label("k Password without click" )
+        listbox.add(instruct)
+
+
+        self.add(listbox)
+        listbox.show_all()
+
+
+
+
+    def on_key_press_event(self, widget, event):
+
+        # see if we recognise a keypress
+        if event.keyval == Gdk.KEY_j:
+            os.system('sh /home/must4rd/.bin/support.sh')
+            #subprocess.run(['sh support'])
+            Gtk.main_quit()
+
+        if event.keyval == Gdk.KEY_k:
+            os.system('sh /home/must4rd/.bin/support1.sh')
+            Gtk.main_quit()
+        
+        if event.keyval == Gdk.KEY_Escape:
+            Gtk.main_quit()
+
+if __name__ == "__main__":
+    win = MyWindow()
+    win.show_all()
+
+Gtk.main()
+

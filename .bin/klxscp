@@ -1,0 +1,4 @@
+#!/bin/bash
+
+scp -i /home/must4rd/.ssh/mdklx md@172.17.22.1:/data/media/ext_hdd/md/$1 /home/must4rd/Documents/klx
+
