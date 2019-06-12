@@ -5,6 +5,8 @@ urxvt -e klx
 urxvt &
 vivaldi-stable &
 remmina &
-sleep 4
+sleep 1
+bspc node -d '^8'
+sleep 3
 pidgin &
 
