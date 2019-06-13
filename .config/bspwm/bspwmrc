@@ -83,6 +83,8 @@ bspc rule -a Kodi desktop='^6' follow=on focus=on
 
 ## workspace 7 (graphics-editors)
 bspc rule -a Gimp desktop='^7' follow=on focus=on
+bspc rule -a Spotify desktop='^7' follow=on focus=on
+bspc rule -a spotify desktop='^7' follow=on focus=on
 bspc rule -a Spotify:* desktop='^7' follow=on focus=on
 bspc rule -a *:Spotify desktop='^7' follow=on focus=on
 bspc rule -a Gimp-2.8 desktop='^7' follow=on focus=on
