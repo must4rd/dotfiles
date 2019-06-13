@@ -18,6 +18,7 @@ alias paux='ps aux | grep -i'
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 alias calc='galculator'
 alias grp='grep -i'
+alias grep='grep --color=auto'
 alias nitrogen='nitrogen /home/must4rd/Pictures'
 
 PS1='[\u@\h \W]\$ '
