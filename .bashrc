@@ -20,6 +20,8 @@ alias calc='galculator'
 alias grp='grep -i'
 alias grep='grep --color=auto'
 alias nitrogen='nitrogen /home/must4rd/Pictures'
+alias mount='sudo mount'
+alias umount='sudo umount'
 
 PS1='[\u@\h \W]\$ '
 # My default editor is nano. I don't even able to find exit button in vim :D
@@ -31,6 +33,9 @@ export PATH="${PATH}:$HOME/.bar"
 # Make ~/.bin folder executable
 export PATH="${PATH}:$HOME/.bin"
 export PATH="${PATH}:$HOME/.bin/clicks"
+export PATH="${PATH}:$HOME/.gem"
+export PATH="${PATH}:/home/must4rd/.gem/ruby/2.6.0/bin"
+
 
 # Make ~/.toys folder executable
 export PATH="${PATH}:$HOME/.toys"

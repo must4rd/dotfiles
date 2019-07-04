@@ -106,6 +106,8 @@ bspc rule -a feh state=floating follow=on
 bspc rule -a Thunar state=floating follow=on
 bspc rule -a Gpicview state=floating follow=on
 bspc rule -a Whatsie state=floating follow=on
+bspc rule -a whatsapp-nativefier state=floating follow=on
+bspc rule -a whats-app-nativefier-d52542 state=floating follow=on
 bspc rule -a clipit desktop='^3' follow=on focus=on
 bspc rule -a clipit:* desktop='^3' follow=on focus=on
 bspc rule -a *:clipit desktop='^3' follow=on focus=on
@@ -165,7 +167,6 @@ feh --bg-fill ~/.wallpaper.jpg
 ## load dunst
 pkill dunst
 dunst &
-xmodmap /home/must4rd/.Xmodmap &
 
 ## reload the cursor theme
 xsetroot -cursor_name left_ptr
@@ -178,3 +179,5 @@ pkill panel-bspwm4
 #panel-bspwm &
 testpanel &
 panel-bspwm4 &
+
+xmodmap /home/must4rd/.Xmodmap &

@@ -19,4 +19,6 @@ fi
 echo $oldip
 echo $newip
     sed -i -r  "s/$oldip/$newip/g" $proxyfile 
-firefox -P foxprox --new-window octo.octo
+firefox -P foxprox --new-window octo.octo &
+# sleep 3
+# xdotool mousemove 3250 480 click 1
