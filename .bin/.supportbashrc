@@ -1,0 +1,1553 @@
+export HISTTIMEFORMAT="%Y-%m-%d %T "
+export OCTO_HISTORY_FILE="/root/.octo_history"
+###############################
+# Support helper-script by mr #
+###############################
+# regular colors
+RST="\033[0;0m"    # RESET colors
+K="\033[0;30m"    # black
+R="\033[0;31m"    # red
+G="\033[0;32m"    # green
+Y="\033[0;33m"    # yellow
+B="\033[0;34m"    # blue
+M="\033[0;35m"    # magenta
+C="\033[0;36m"    # cyan
+W="\033[0;37m"    # white
+
+# bold colors (same in bold)
+EMK="\033[1;30m"  # black   
+EMR="\033[1;31m"  # red     
+EMG="\033[1;32m"  # green   
+EMY="\033[1;33m"  # yellow  
+EMB="\033[1;34m"  # blue    
+EMM="\033[1;35m"  # magenta 
+EMC="\033[1;36m"  # cyan    
+EMW="\033[1;37m"  # white   
+
+ST=80
+
+##################################
+#        CUSTOM FUNCTIONS        #
+##################################
+
+#################################
+# Show colored title (title "<text>" "<fillerchar>") 
+function title() 
+{
+  SPACE=$((${#1}+2))
+  
+  printf "${C}"
+  for (( i = 0; i < $ST; i++ )); do
+    if [[ $i -eq $(($ST / 2 - $SPACE / 2)) ]]; then
+      printf " $1 "
+      i=$(($i+$SPACE))
+    else
+      printf "$2"
+    fi
+  done
+  printf "${W}\n"
+}
+
+####################
+# Initial sources! #
+# Do not move!     #
+####################
+clear
+title "OG Infos" "#"
+source /etc/profile
+source /root/.profile
+
+#################################
+# Show aliases and functions with definitions
+function mrhelp()
+{
+  echo ""
+  title "ALIASES" "-"
+  cat /tmp/.bashrc_temp | egrep "^alias [A-Za-z_0-9]+\=" | sed -e 's/alias //' | sed -e 's/\=/\t/' | sort | awk '{printf("%-20s %s \n",$1,$(0))}' | sed -r 's/\S+//1'
+  #cat /tmp/.bashrc_temp | egrep "^alias [A-Za-z_0-9]+\=" | sed -e 's/alias //' | sed -e 's/\=/\t\t/' | sort # originalzeile
+  title "FUNCTIONS" "-"
+  cat /tmp/.bashrc_temp | grep -B 1 '^function' | sed -e '/--/d' -e 'N;s/\(.*\)\nfunction \(.*\)/\2\t\1/;P;D' | sort | awk '{printf("%-20s %s \n",$1,$(0))}' | sed -r 's/\S+//1'
+  #cat /tmp/.bashrc_temp | grep -B 1 '^function' | sed -e '/--/d' -e 'N;s/\(.*\)\nfunction \(.*\)/\2\t\t\1/;P;D' | sort # originalzeile
+  title "END" "-"
+  echo ""
+}
+
+#################################
+# Execute sql-Statement on webgui
+function wgui() 
+{
+  if [[ -z $1 ]]; then
+    echo -e "\n${EMB}Usage:${W}\t\t wgui ${B}\"<sql-statement>\""
+    echo -e "${EMB}${W}\t\t wgui ${B}\"<sql-statement>\" \"<table>\""
+    echo -e "${EMC}Example:${W}\t wgui ${C}\"SELECT * FROM Users\""
+    echo -e "${EMC}${W}\t\t wgui ${C}\"SHOW DATABASES\" \"\""
+    echo -e "${EMC}${W}\t\t (empty <table>-param: shows all databases)"
+    echo -e "${EMY}Note:${W}\t\t You ${R}don't${W} need the ${EMW}\";\"${W} at the end of the line"
+    echo -e "${B}----------------------------------------------------------------\n" 
+  else
+    if [[ -z $2 ]]; then
+      mysql webgui -e "$1;"
+    fi
+    if [[ ! -z $2 ]]; then
+      mysql "$2" -e "$1;"
+    fi
+
+  fi
+}
+
+#################################
+# Add Mixed Mode user
+function add_mm_user() 
+{
+    if [[ $# -eq 0 ]]; then
+        echo -e "\n${EMB}Adds a mixed-mode User to the mysql Databse with Profile 5 (default)"
+        title "" "-"
+        echo -e "${EMB}Usage:${W}\t\t\t ${FUNCNAME[0]} ${B}\"<username> <subnet> <subnetmask in BIT>\""
+        echo -e "${W}or"
+        echo -e "${EMB}Usage:${W}\t\t\t ${FUNCNAME[0]} ${B}\"<ip> <subnetmask in BIT>\""
+        title "" "-"
+        echo -e "${EMC}Example 2408 (SEG):${W}\t add_mm_user ${C}mm_seg 34 20 ${W}\t (1)"
+        echo -e "${EMC}Example 2409 (LEHRER):${W}\t add_mm_user ${C}mm_lehrer 48 20 ${W}\t (2)"
+        echo -e "${EMC}Example 2410 (GAESTE):${W}\t add_mm_user ${C}mm_gast 64 20 ${W}\t (3)"
+        echo -e "${EMC}Example ip address:${W}\t add_mm_user ${C}10.1.1.1 32 ${W}\t (4) ${Y}You will be ASKED for IP and SUBNETMASK(BIT)!"
+        echo -e "${W}You can also choose one of the options above (type in the number or cancel with CTRL+C): "
+        read choice
+        case $choice in
+            1 )
+                user="mm_seg"
+                subnet="34"
+                submask="20"
+                ;;
+            2 )
+                user="mm_lehrer"
+                subnet="48"
+                submask="20"
+                user="mm_lehrer"
+                ;;
+            3 )
+                user="mm_gast"
+                subnet="64"
+                submask="20"
+                ;;
+            4 )
+                echo -e "${W}Please enter the ${EMC}ip address${W}:"
+                read ip
+                user="mm_${ip}"
+                echo -e "${W}Please enter the ${EMC}subnet mask ${W}in bit (e.g. 32):"
+                read submask
+                SQL="INSERT INTO User\
+                    VALUES (NULL,'${user}',5,'default','default','mr@hsm.de','passworT',NULL,NULL,'${ip}',${submask},0,1,0,NULL,0,NULL,NULL,0,NULL);"
+                mysql webgui -e "${SQL}"
+                mysql webgui -e "SELECT * FROM User WHERE mixed_mode=1" | grep ${user}
+                title "Done" "-"
+                user=""
+                ;;
+            * )
+                title "Invalid input" "-"
+                ;;
+        esac
+        if ! [[ -z ${user} ]]; then
+            SQL="INSERT INTO User\
+                VALUES (NULL,'${user}',5,'default','default','mr@hsm.de','passworT',NULL,NULL,'192.168.${subnet}.0',${submask},0,1,0,NULL,0,NULL,NULL,0,NULL);"
+            mysql webgui -e "$SQL"
+            mysql webgui -e "SELECT * FROM User WHERE mixed_mode=1" | grep ${user}
+            title "Done" "-"
+        fi
+    elif [[ $# -eq 2 ]]; then
+        ip=$1
+        submask=$2
+        user="mm_${ip}"
+        SQL="INSERT INTO User\
+            VALUES (NULL,'${user}',5,'default','default','mr@hsm.de','passworT',NULL,NULL,'${ip}',${submask},0,1,0,NULL,0,NULL,NULL,0,NULL);"
+        mysql webgui -e "$SQL"
+        mysql webgui -e "SELECT * FROM User WHERE mixed_mode=1" | grep $1
+    elif [[ $# -eq 3 ]]; then
+        SQL="INSERT INTO User\
+            VALUES (NULL,'${1}',5,'default','default','mr@hsm.de','passworT',NULL,NULL,'192.168.${2}.0',${3},0,1,0,NULL,0,NULL,NULL,0,NULL);"
+        mysql webgui -e "$SQL"
+        mysql webgui -e "SELECT * FROM User WHERE mixed_mode=1" | grep $1
+    fi
+}
+
+#################################
+# Show User Roles ( muprofile [$user] )
+function muprofile() 
+{
+    if [[ -z $1 ]]; then
+        echo -e "\n${EMB}Shows User Profile(s)."
+        echo -e "\n${EMB}Usage:${W}\t\t ${FUNCNAME[0]}${B} \"<username>\""
+        echo -e "${EMC}Example:${W}\t muprofile ${B}\"roth\" ${Y}\
+            Shows all Users and Roles of all Users containing \"roth\"" 
+    else
+        mysql webgui -e "SELECT username, profile_name, description\
+            FROM User,Profile\
+            WHERE username LIKE '%${1}%' AND p_id = profile_id;"
+    fi
+}
+
+#################################
+# Prints ethtool for interface <ethX> 
+function detect_link() 
+{
+  if [[ $(ethtool $1 | grep Link\ detected) == *"yes" ]]; then
+    printf  "${EMG}YES"
+  else
+    printf  "${EMR}NO"
+  fi 
+}
+
+#################################
+# Prints ip for interface <ethX> 
+function get_ip() 
+{
+  IP=$(ifconfig $1  2>&1| grep inet | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -1)
+  if [[ -z ${IP} ]]; then
+    printf "${EMR}none\t"
+  else
+    printf $IP; echo
+  fi
+}
+
+#################################
+# Prints arp-table for offline aps
+function arpofaps()
+{
+    for ap in `mysql webgui -e "SELECT * FROM wlan_aps" | cut -d "	" -f 3`
+    do 
+         arp -n | grep $ap
+    done
+}
+
+#################################
+# vimerr <file> - filter 'critical|error|crash|fail|panic'
+function vimerr() 
+{
+    grep -Pi 'critical|error|crash|fail|panic' $1 | grep -v statistics | vi -c "set ft=messages" -c "set buftype=nowrite" - 
+}
+
+#################################
+# ADD user_notes column to "wlan_aps"-table (fix 3.0.34)
+function m_add_usernotes()
+{
+    mysql webgui -e "ALTER TABLE wlan_aps ADD COLUMN `user_notes` text"
+}
+
+#################################
+# US 03 random joke
+function octo_joke()
+{
+	curl -s --insecure https://www.zufallswitz.de/ | grep "bookmark" | grep href\=.**\<\/a | grep -o summary\"\>.**\<\/div\> | cut -d ">" -f2 | cut -d "<" -f1 | sed -e 's/\&\#....\;//'g | sed "s/.\{160\}/&\\n/g"
+}
+
+#################################
+# resetvoucher <eid> RESET Voucher Code
+function resetvoucher()
+{
+    if [[ $# -ne 1 ]]; then
+        echo -e "\n${EMB}Usage:${W}\t\t${FUNCNAME[0]}  ${B}<eid>"
+    else
+        mysql webgui -e "UPDATE ExtraLogin 
+        SET src = NULL,
+        dest = NULL,
+        status = 0,
+        dead_date = NULL,
+        start_date = NULL,
+        mac = NULL,
+        to_process = 0
+        WHERE eid=${1}"
+
+        ipset -F
+        pf -e
+    fi
+}
+
+#################################
+# deletevoucher <eid> DELETE Voucher Code
+function deletevoucher()
+{
+    if [[ $# -ne 1 ]]; then
+        echo -e "\n${EMB}Usage:${W}\t\t${FUNCNAME[0]}  ${B}<eid>"
+    else
+        mysql webgui -e "DELETE FROM ExtraLogin WHERE eid=${1}"
+        ipset -F
+        pf -e
+    fi
+}
+
+#################################
+# checks if og-build is up to date
+function og_build_check()
+{
+    BUILD_FILE="/octo/sys/octogate-build"
+    CURR_BUILD="/tmp/.current_octogate_build"
+
+    if test -e ${CURR_BUILD}
+    then
+        if grep -q ${OCTO_VER} ${CURR_BUILD}
+        then 
+            if ! diff -q ${BUILD_FILE} ${CURR_BUILD} &> /dev/null
+            then 
+                echo -e "${EMR}WARNING:\t\t\t build version differs from current build!"
+            fi
+        fi
+    fi
+
+}
+
+#################################
+# Print first helpful information
+function mrinfo() 
+{
+    NEW="white_gen -> generiert Whitelist Einträge"
+    RAMINFO=$(free -m | awk 'FNR == 3 {print $3 " / " $3+$4}')
+    WB=$(wbinfo -t 2>&1 )
+    WBVAR="${EMR}FAILED"
+    CNT_USERS=0
+    UPTIME=$(uptime | cut -d ' ' -f 4,5,6 | tr -d '[:space:]' | sed 's/,/ /g')
+    if [ -f /data/.maintenance/migration.done ]; then LAST_UPDATED="$(cat /data/.maintenance/migration.done | grep Date | sed 's/Date:\s*//')"; fi;
+
+    if [[ $WB == *"succeeded" ]]; then
+        WBVAR="${EMG}OK"
+        CNT_USERS=$(wgui "SELECT COUNT(*) AS Anzahl FROM User WHERE is_ad_user=1" | grep -E '[0-9]+')
+    fi
+    
+    title "INFOs by mr script" "#"
+    echo -e "${W}CUSTOM aliases etc. type ${R}mrhelp${W} to get a detailed list" 
+    echo -e "${W}or use ${R}mrinfo${W} to view these infos again" 
+    
+    title "rc-status Info" "-"
+    echo -e "${R}$(rc-status | egrep crashed\|inactive\|error\|stopped|\
+        sed -e 's/ \+/ /g')"
+    
+    title "WIFI Info" "-" 
+    echo -e "${W}APs ONLINE:\t\t\t ${EMG}`aps | grep ONLINE | wc -l`"
+    echo -e "${W}APs OFFLINE:\t\t\t ${EMR}$((`aps | grep OFFLINE | wc -l`-1))" 
+    
+    if [ "$OCTO_AD_PASSWORD" != "" ]; then 
+         title "winbind Info" "-"   
+         echo -e "${EMC}${OCTO_AD_DOMAIN}\\ ${OCTO_AD_ADMINISTRATOR}${W} :\t\t ${EMR}${OCTO_AD_PASSWORD}${W}"
+         echo -e "${W}Users imported from AD: \t ${EMG}${CNT_USERS}"  
+         echo -e "${W}wbinfo -t\t\t\t ${WBVAR}"
+    fi 
+
+    title "IP Info" "-" 
+    echo -e "${W}IP ${EMM}eth0\t${EMG}$(get_ip eth0)${W}\t\t INT\tLink:\t$(detect_link eth0)"
+    echo -e "${W}IP ${EMM}eth1\t${EMG}$(get_ip eth1)${W}\t\t DMZ\tLink:\t$(detect_link eth1)"
+    echo -e "${W}IP ${EMM}eth2\t${EMG}$(get_ip eth2)${W}\t\t WIFI\tLink:\t$(detect_link eth2)"
+    echo -e "${W}IP ${EMM}eth3\t${EMG}$(get_ip eth3)${W}\t\t EXT\tLink:\t$(detect_link eth3)"
+    if [[ $(ip address show eth4 2> /dev/null) ]]
+    then
+        echo -e "${W}IP ${EMM}eth4\t${EMG}$(get_ip eth4)${W}\t\t nA\tLink:\t$(detect_link eth4)"
+    fi
+    echo -e "${W}IP ${EMM}tun0\t${EMG}$(get_ip tun0)${C} :8080\t${W} TUN0${W}\tManagement / Proxy"
+    echo -e "${W}IP ${EMM}tun1\t${EMG}$(get_ip tun1)${C}\t\t${W} OpenVPN Server${W}"
+    echo -e "${W}IP ${EMM}tun2\t${EMG}$(get_ip tun2)${C}\t\t${W} OpenVPN Client${W}"
+    echo -e "${W}Link WebGUI:${W}\t\t\t https://$(get_ip tun0):444"
+    
+    title "SYS Info" "-" 
+    df -h | egrep sda6\|hda6 | awk -v red="$(tput setaf 1)" -v green="$(tput setaf 2)"\
+        -v yellow="$(tput setaf 3)" -v reset="$(tput sgr0)" \
+        '{ if ($5>90) color=red; else if ($5>80) color=yellow; else color=green
+        printf "%s%s%s on %s%s\t\t %s%s\n",color, $1, reset, color, $6, $5, reset }'
+    if [[ $(grep "sda6.*\sro[\s,]" /proc/mounts) ]]; then
+        echo -e "${EMR}### WARNING: SDA6 IS READONLY!!! ###"
+    fi
+
+
+    if [ "$LAST_UPDATED" != "" ]; then
+      echo -e "${W}Last Update:\t\t\t ${W}${LAST_UPDATED}"
+    fi
+    echo -e "${W}Uptime:\t\t\t\t ${W}${UPTIME}"
+    echo -e "${W}RAM:\t\t\t\t ${W}${RAMINFO} MB used"
+    echo -e "${W}Arch:\t\t\t\t ${W}$(uname -m)"
+    og_build_check   
+
+    cat /var/log/mysql/mysqld.err | grep --colour=auto -i error &>/dev/null;
+    if [ $? == "0" ]; then
+        title "last 2 mysql ERRORs" "-"
+        echo -ne "${R}"
+    	tail -n2000 /var/log/mysql/mysqld.err | grep -n --colour=auto -i error | tail -2
+    fi;
+    
+    # title "Check MySQL stored procedures and functions" "-"
+    # check_proc_func_out=`check_proc_func`
+    # if [ "${check_proc_func_out}" = "" ]; then
+    # 	echo -e "${W}All ${G}OK"
+    # else
+    #     check_proc_func
+    # fi
+
+    title "SSH connections" "-"
+    a=$(ps -aux | grep -i tmp | grep -i SSH_USR | cut -d "'" -f 2); echo -en "Angemeldete Socto-User:(" $a "),"
+    echo -en " gesamte Anzahl SSH-User: "; Anz_Us=$(ps -aux | grep -i sshd: | grep -v grep | wc -l); echo $Anz_Us
+
+    title "END" "#"
+
+    echo -e ">>> Newest feature: ${NEW}"
+}
+
+#################################
+# rdptables <rdp-host> - create iptables rule for RDP
+function rdptables()
+{
+    iptables -t nat -A PREROUTING -i tun0 -p tcp --dport 3389 -j DNAT --to ${1}:3389
+}
+
+#################################
+# chkcontentfilter <domain> - show hit-value from blacklist
+function chkcontentfilter()
+{
+    if [[ -z $1 ]]; then
+        title "CONTENTFILTER" "-"
+        echo -e "\n${EMB}Usage:${W}\t\t chkcontentfilter ${B}\"<domain>\""
+        echo -e "${EMC}Example:${W}\t chkcontentfilter ${C}\"porn.com\""
+        echo -e "${W}"
+        mysql contentfilter -e "SELECT getBlackList(REVERSE('porn.com'))"
+        title "END" "-"
+    else
+        mysql contentfilter -e "SELECT getBlackList(REVERSE('${1}'))"
+    fi
+}
+
+#################################
+# Kills all detached tmux sessions
+function tsesski()
+{
+	tmux list-sessions | grep -v attached | cut -d: -f1 |  xargs -t -n1 tmux kill-session -t
+}
+
+#################################
+# aktive MAC aus IPTABLES-SAVE in ExtraLogin mit gültigem Ablaufdatum iptables-save
+function printVoucher_uV38()
+{
+    macs=$(iptables-save | grep NAT_HOTEL_FW | awk '{print $8}' | grep -v tcp | sort -u | xargs echo -en | tr -s ' ' '|');
+    echo;
+    echo -en 'MACs aus IPTABLES-SAVE in ExtraLogin: ';
+    echo;
+    mysql webgui -e "SELECT * FROM ExtraLogin WHERE dead_date >= DATE(NOW())" | egrep -i $macs | awk "{print \$4, \$9, \$16}"
+}
+
+#################################
+# growth check - prüft in /var/log alle Verzeichnis über X Sekunden auf das Wachstum
+function printGrowth()
+{
+    E='echo -e';
+    e='echo -en';
+    nodir='^d[a-zA-Z0-9]';
+    nodot='^/.';
+    lion='\033[36m';
+    lioff='\033[0m';
+    dcd='/root/';
+    function nolines ()
+    {
+        grep --colour=auto -v '^\s*$'
+    };
+    function logroot ()
+    {
+        cd /var/log
+    };
+    function logog ()
+    {
+        cd /var/log/octogate
+    };
+    function tabs ()
+    {
+        column -t
+    };
+    function givelist ()
+    {
+        ls --color=auto -laR | deldir | awk '{print $9, $5, $1}' | awk '{print $1, $2}' | tabs | delke | delto
+    };
+    function delke ()
+    {
+        grep --colour=auto -v "\.keep"
+    };
+    function delto ()
+    {
+        grep --colour=auto -v "total"
+    };
+    function deldir ()
+    {
+        grep --colour=auto -v '^d[a-zA-Z0-9]'
+    };
+    function magic ()
+    {
+        touch /root/dsum;
+        logroot;
+        givelist > $dcd\01;
+        sleep $zz;
+        logroot;
+        givelist > $dcd\02;
+        $E $lion\\t/var/log/ Growth Check 60 Sekunden$lioff > $dcd\dsum;
+        diff -uNr $dcd\01 $dcd\02 | grep --colour=auto -v "\@" | egrep '(^\+|^\-|^ ./)' | grep --colour=auto -v root >> $dcd\dsum;
+        rm $dcd\01 $dcd\02;
+        cat $dcd\dsum | egrep $(cat $dcd\dsum | awk '{print substr($0,2)}' | awk '{print $1}' | sort -d | uniq -d | xargs echo -en | tr -s ' ' '|') | sort -d > $dcd\auswertung;
+        $E $lion\ "$(date) - Growth Check $zz Sekunden: bei /var/log/" $lioff;
+        echo;
+        cat $dcd\auswertung | awk 'NR%2{a=$0;next}{print a" "$0}' | column -t | awk '{print $1,$2/1024/1024" MB",$4/1024/1024" MB","Differenz: " ($4-$2)}' | column -t
+    };
+    function hdr ()
+    {
+        if [ $1 = "tr" ]; then
+            echo -e "\t----------------------------------------------------------------------------------\033";
+        else
+            satz=$(echo "$@");
+            al=$(echo ${#satz});
+            b=$(expr 80 - $al);
+            cl=$(echo $(( $b / 2 )) );
+            rest=$(echo $(( $b % 2 )) );
+            links=$cl;
+            rechts=$links;
+            echo -en "\t";
+            while [ $links != 0 ]; do
+                echo -en '-';
+                let links=$links-1;
+            done;
+            echo -en "\033[36m[\033[32m"$satz"\033[36m]\033[0m";
+            if [ $rest -gt "0" ]; then
+                echo -en '-';
+            fi;
+            while [ $rechts != 0 ]; do
+                echo -en '-';
+                let rechts=$rechts-1;
+            done;
+            echo;
+        fi
+    };
+    function dosth ()
+    {
+        if [[ -z $@ ]]; then
+            echo -e "$(hdr $(echo 'Infotext der Ausrufe'))";
+            echo -e "\t Aufruf: \033[42m"printGrowth"\033[0m [\033[36m-option\033[0m] (optional)";
+            echo -e "\t \033[36mprintGrowth + Zahl\033[0m \t\t\t :\t prüft über X Sekunden auf Differenzen";
+            echo;
+            echo -e "\t \033[35m*: Dateien dsum und auswertung werden in /root/ angelegt\033[0m";
+            echo -en "\033[32m\t---------------------------------------------------------------\033[5m Vers.a.002 \033[0m";
+            echo -e "\033[32m------- \033[0m";
+            echo $@;
+        else
+            zz=$@;
+            magic;
+        fi
+    };
+    dosth $@
+} 
+
+
+#################################
+# aktive MAC aus IPTABLES-SAVE in ExtraLogin mit gültigem Ablaufdatum ipset -L
+function printVoucher_aV38()
+{
+    macs=$(ipset -L OCTOGUEST_NOSSL | grep ":..:" | sort -u | xargs echo -en | tr -s ' ' '|');
+    echo;
+    echo -en 'MACs aus IPTABLES-SAVE in ExtraLogin: ';
+    echo;
+    mysql webgui -e "select * from ExtraLogin WHERE dead_date >= DATE(NOW())" | egrep -i $macs | awk "{print \$4, \$9, \$16}"
+}
+
+################################
+# checkSNV prüft ob alles korrekt hinterlegt ist
+function checkSNV()
+{
+    # Einleitung SNV-Check, VZbuilt und wechsel
+    clear;
+    mkdir /tmp/snvcheck;
+    cd /tmp/snvcheck;
+    echo -e "\033[36m SNV-Check \033[0m";
+    # host = inl?
+    cat /var/log/octogate/octo-vpn.nfo | grep --colour=auto -i inl &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "Host? \033[36m[\033[0m\033[32m INL \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "Host=INL? \033[36m[\033[0m\033[31m WRONG \033[36m]\033[0m" >> ck.status;
+    fi;
+    # module aktiv?
+    cat /etc/octo/modules.conf | grep --colour=auto 'MENT="1"' &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "Module \033[36m[\033[0m\033[32m angepasst \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "Module \033[36m[\033[0m\033[31m unvollständig \033[36m]\033[0m" >> ck.status;
+    fi;
+    # wbinfo ok?
+    ( wbinfo -t &>/dev/null );
+    if [ $? == "0" ]; then
+        echo -e "wbinfo \033[36m[\033[0m\033[32m angepasst \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "wbinfo \033[36m[\033[0m\033[31m Error \033[36m]\033[0m" >> ck.status;
+    fi;
+    # hosteinträge vorhanden?
+    cat /etc/hosts | grep --colour=auto -i websnv &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "hostseintrag \033[36m[\033[0m\033[32m vorhanden \033[36m]\033[0m" >> ck.status;
+        snvIP=$(cat /etc/hosts | grep snv | awk '{print $1}');
+    else
+        echo -e "hostseintrag \033[36m[\033[0m\033[31m unvollständig \033[36m]\033[0m" >> ck.status;
+    fi;
+    # cron-cifs (mount check)
+    cat /etc/octo/octocron | grep --colour=auto -i cifs &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "cron-cifs \033[36m[\033[0m\033[32m vorhanden \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "cron-cifs \033[36m[\033[0m\033[31m fehlt \033[36m]\033[0m" >> ck.status;
+    fi;
+    # opf.d - timago regeln vorhanden?
+    cat /etc/octo/opf.d/* | grep --colour=auto -i timago &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "opf.d-Timago \033[36m[\033[0m\033[32m vorhanden \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "opf.d-Timago \033[36m[\033[0m\033[31m fehlt \033[36m]\033[0m" >> ck.status;
+    fi;
+    # netconf - byod url gesetzt?
+    bb=$(cat /etc/octo/octonet.conf | grep -i byod_back | cut -d \" -f2 | grep http);
+    if [[ -z $bb ]]; then
+        echo -e "netconf-byodURL \033[36m[\033[0m\033[31m fehlt \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "netconf-byodURL \033[36m[\033[0m\033[32m vorhanden \033[36m]\033[0m" >> ck.status;
+    fi;
+    # netconf - byod IF gesetzt?
+    bb=$(cat /etc/octo/octonet.conf | grep -v "\#"| grep -i byod_if | cut -d \" -f2 | grep -v BYOD_IF);
+    if [[ -z $bb ]]; then
+        echo -e "netconf-byodIF \033[36m[\033[0m\033[31m fehlt \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "netconf-byodIF \033[36m[\033[0m\033[32m vorhanden \033[36m]\033[0m" >> ck.status;
+    fi;
+    # nginx im runlvl?
+    cat /etc/octo/services.conf | grep --colour=auto -i nginx &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "nginx-im-rc \033[36m[\033[0m\033[32m vorhanden \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "nginx-im-rc \033[36m[\033[0m\033[31m fehlt \033[36m]\033[0m" >> ck.status;
+    fi;
+    # nginx PIDS?
+    nginalive=$(echo -en "nginx-PIDS_mast/work: \033[36m[\033[0m\033[32m "; ps -aux | grep nginx | egrep '(master|worker)' | awk '{print $2}' | xargs echo -en | tr -s ' ' ',');
+    ps -aux | grep --colour=auto nginx | egrep '(master|worker)' &>/dev/null;
+    if [ $? = "0" ]; then
+        echo -e "$nginalive \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "nginx \033[36m[\033[0m\033[31m läuft_nicht \033[36m]\033[0m" >> ck.status;
+    fi;
+    # pfconf portfreischaltungen vorhanden?
+    cat /etc/octo/octopf.conf | grep --colour=auto -v DNAT | grep --colour=auto -i $snvIP &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "pfconf_portfs \033[36m[\033[0m\033[32m vorhanden \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "pfconf_portfs \033[36m[\033[0m\033[31m fehlen \033[36m]\033[0m" >> ck.status;
+    fi;
+    # pfconf dnat vorhanden?
+    cat /etc/octo/octopf.conf | grep --colour=auto -A5 DNAT_SERVICE | grep --colour=auto -v \# | grep --colour=auto -B 1 \) | grep --colour=auto -v SNAT | grep --colour=auto -i $snvIP &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "pfconf_dnat \033[36m[\033[0m\033[32m vorhanden \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "pfconf_dnat \033[36m[\033[0m\033[31m fehlt \033[36m]\033[0m" >> ck.status;
+    fi;
+    # Gäste - MMUser vorhanden?
+    mysqlcheck=$(mysql webgui -e 'SELECT * FROM User WHERE mixed_mode=1');
+    echo $mysqlcheck | grep --colour=auto -P '192\.168\.(6([4-9])|(7[0-9]))' &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "vlan2410_MM_U \033[36m[\033[0m\033[32m vorhanden \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "vlan2410_MM_U \033[36m[\033[0m\033[31m fehlt \033[36m]\033[0m" >> ck.status;
+    fi;
+    # GastIF Transparenter Proxy aktiv?
+    cat /etc/octo/octopf.conf | grep --colour=auto 'VLAN_AP2410=1' | cut -d = -f 2 | grep --colour=auto 1 &>/dev/null;
+    if [ $? == "0" ]; then
+        echo -e "GASTIF_TProxy \033[36m[\033[0m\033[32m aktiv \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "GASTIF_TProxy \033[36m[\033[0m\033[31m inaktiv \033[36m]\033[0m" >> ck.status;
+    fi;
+    # BYODIF Transparenter Proxy aktiv?
+    bb=$(cat /etc/octo/octonet.conf | grep -v "\#"| grep -i byod_if | cut -d \" -f2 | grep -v BYOD_IF);
+    bIFFin=$(bIFck=$(echo -e $bb"=1="); cat /etc/octo/octopf.conf | grep $bIFck | cut -d = -f 2 | grep 1);
+    if [[ ! -z $bb ]] && [ $bIFFin == "1" ]; then
+        echo -e "byodIF_TProxy \033[36m[\033[0m\033[32m aktiv \033[36m]\033[0m" >> ck.status;
+    else
+        echo -e "byodIF_TProxy \033[36m[\033[0m\033[31m inaktiv \033[36m]\033[0m" >> ck.status;
+    fi;
+    # Ausgabe einleiten und VZ wieder bereinigen
+    cat ck.status | column -t;
+    cd;
+    rm -r /tmp/snvcheck;
+    echo done;
+    # Variablen leeren
+    unset bb;
+    unset bIFck;
+    unset bIFFin;
+    unset mysqlcheck;
+    unset nginalive;
+    unset snvIP
+}
+
+################################
+# gibt zur conf deploy version die entsprechende Zielversion heraus
+function getVersionLMZ()
+{
+    deploy_version="?";
+    deploy_cust="?";
+    if [ -f "/octo/etc/confdeploy.txt" ]; then
+        deploy_cust=`cat /octo/etc/confdeploy.txt | grep customer | cut -d "=" -f 2`;
+        deploy_version=`cat /octo/etc/confdeploy.txt | grep version | cut -d "=" -f 2`;
+    fi;
+    echo -en "- aktuelle Daten - \nConfDeployVersion:\033[36m$deploy_version\033[0m, Typ:\033[36m$deploy_cust\033[0m, Version:\033[36m${OCTO_VER}\033[0m, Hd.Name:\033[36m${OCTO_DEAL}\033[0m \n\n";
+    function getVersioncatch ()
+    {
+      case $userip in
+        "19")
+          echo "3.0.34"
+        ;;
+        "20")
+          echo "3.0.35"
+        ;;
+        "21")
+          echo "3.0.36"
+        ;;
+        "22")
+          echo "3.0.38 (reboot nach update)"
+        ;;
+        "23")
+          echo "3.0.39/3.0.42 (neu)"
+        ;;
+        "24")
+        echo "3.0.42"
+        ;;
+        "25")
+          echo "3.0.42 (reboot nach update)"
+        ;;
+        "26")
+          echo "3.0.43"
+        ;;
+        *)
+          echo -e "\033[31m[ Unknown - überprüfe deine Eingabe! ]\033[0m"
+        ;;
+      esac
+    };
+    if [[ -z $@ ]]; then
+        echo -en "Welche Confdeployversion hat deine Maschine ?: ";
+        read -p "" userip;
+        echo -en "dann sollte Sie Version ";
+        echo -en $(getVersioncatch $userip) "sein. \n";
+    else
+        echo -en "zu der Confdeployversion $@ sollte die Version entsprechend" $(getVersioncatch $@) "sein. \n";
+    fi
+}
+
+#################################
+# Zeige Surfverhalten der User
+function suh()
+{
+    touch /root/test.txt;
+    touch /root/final.txt;
+    whosurfed=$(cat /var/log/squid/access.log | grep TCP_MISS/200 | grep "GET" | awk '{print $5, $10}' | sort -u | sort -d | grep -v "-");
+    if [[ $whosurfed == "" ]]; then
+        echo "/var/log/squid/access.log enthält keine passenden Einträge" > /root/test.txt;
+    else
+        echo "$whosurfed" > /root/test.txt;
+    fi;
+    read -a websurfer -d "" < /root/test.txt;
+    linebreaker=`expr 1`;
+    for user in "${websurfer[@]}";
+    do
+        if [[ $linebreaker == "14" ]]; then
+            linebreaker=`expr 1`;
+            echo -en "$catch \n" >> /root/final.txt;
+            catch=$(echo "");
+        else
+            linebreaker=`expr $linebreaker + 1`;
+            punkt=$(echo $user | grep -i "...\...\.....");
+            catch=$(echo -en "$catch $user");
+        fi;
+    done;
+    cat /root/final.txt | column -t;
+    echo;
+    read -p "Eingabe zu suchender User: " userip;
+    echo "Angesurfte Webseiten der UserIP: ";
+    echo;
+    cat /var/log/squid/access.log | grep --colour=auto $userip | grep --colour=auto TCP_MISS/200 | grep --colour=auto "GET" | awk '{print $5, $9, $10}' | sort -u | sort -d;
+    rm /root/test.txt;
+    rm /root/final.txt
+}
+
+#################################
+# ldcheck [-g <group>, -u <username>] - displays details about group members or user-info
+function ldcheck()
+{
+    local BINDDN=$(echo $OCTO_AD_DOMAIN | tr '.' '\0' | xargs -0 printf "dc=%s," | sed -E 's/,$//')
+    local ADMIN_DN="CN=${OCTO_AD_ADMINISTRATOR},CN=Users,${BINDDN}"
+    local ARG="givenName"
+
+    echo -e "${W}BINDDN is: ${C}${BINDDN}${W}"
+
+    ########################################
+
+    local OPTIND opt
+    while getopts "u:g:" opt
+    do
+        case "$opt" in
+            u)  ARG="(sAMAccountname=${OPTARG})"
+                echo -e "${W}AD_FILTER: ${C}${ARG}${W}"
+                ;;
+
+            g)  local GRP_DN=$(ldapsearch -x -LLL -h ${OCTO_AD_SERVER} -D ${ADMIN_DN} -w ${OCTO_AD_PASSWORD} -b"${BINDDN}" | \
+                    perl -p00e 's/\r?\n //g' | grep -i ${OPTARG} | head -1 | cut -d ' ' -f 2)
+                ARG="(memberOf:1.2.840.113556.1.4.1941:=${GRP_DN})"
+                ARG="${ARG} distinguishedName"
+                echo -e "${W}AD_FILTER: ${C}${ARG}${W}"
+                ;;
+        esac
+    done
+
+    ########################################
+
+    echo -e "${W}AD_IP    : ${C}${OCTO_AD_SERVER_IP}${W}"
+    echo -e "${W}AD_SERVER: ${C}${OCTO_AD_SERVER}${W}"
+    echo -e "${W}AD_ADMIN : ${C}${ADMIN_DN}${W}"
+    echo -e "${W}AD_PASSWD: ${C}${OCTO_AD_PASSWORD}${W}"
+
+    ########################################
+
+    ldapsearch -o ldif-wrap=no -x -LLL -h ${OCTO_AD_SERVER} -D "${ADMIN_DN}" -w ${OCTO_AD_PASSWORD} -b"${BINDDN}" ${ARG}
+
+    ########################################
+
+    echo -en "${W}Query was: "
+    echo -e  "${C}ldapsearch -o ldif-wrap=no -x -LLL -h ${OCTO_AD_SERVER} -D \"${ADMIN_DN}\" -w ${OCTO_AD_PASSWORD} -b\"${BINDDN}\" ${ARG}"
+}
+
+#################################
+# Check for missing ipset-MAC Addresses
+function missing_voucher_mac()
+{
+    local query='SELECT `mac`, `key`, start_date , dead_date FROM ExtraLogin WHERE `mac` IS NOT NULL AND dead_date > NOW()'
+    local tmp_voucher_file="/tmp/active_voucher.txt"
+    local cnt=0
+
+    mysql webgui -e "${query}"  > "${tmp_voucher_file}"
+
+    echo -e "searching for active voucher-MACs ${R}NOT${RST} in ipset:"
+
+    for mac in $(cat "${tmp_voucher_file}" | cut -f 1)
+    do 
+        if [ $(ipset -L | grep -i $mac | wc -l) -lt 1 ]
+        then 
+            ((cnt++))
+            echo "$mac missing"
+        fi
+    done
+    echo -e "${C}total:${RST} ${cnt}"
+}
+
+#################################
+# print passwords i can't remember
+function pws()
+{
+    title "Passwords" "-"
+    echo -e "${W}Webgui 2.4.3\t ${Y}Ree7quai" 
+    echo -e "${W}Webgui 3.x.x\t ${Y}ree5Thai" 
+    echo -e "${W}Tine Setup\t ${Y}tinesetup ${W}: ${Y}aifahY6i" 
+    echo -e "${W}Tine Admin\t ${Y}tine.admin ${W}: ${Y}Nen5quai" 
+    echo -e "${W}Tine DB\t\t ${Y}tine ${W}: ${Y}osh2Yain" 
+    echo -e "${W}igore\t\t ${Y}ree7Choo"
+    echo -e "${W}WebGUI-DB:\t ${Y}webgui ${W}: ${Y}EiSei2Mo"
+    echo -e "${W}n.A.:\t\t ${Y}Tei0raew ${W}, ${Y}GKpte1kc ${W}"
+    echo -e "${W}octo_setup:\t ${Y}Ach9Yagh"
+    echo -e "${W}MySQL:\t\t ${Y}Fi0geeth"
+    title "END" "-"
+}
+
+#################################
+# writes "DATE SSH_USR CMD" to /root/.octo_history (used by PROMPT_COMMAND)
+function write_history() 
+{
+    HIST_DATE=$(/bin/date "+%Y-%m-%d %H:%M:%S")
+    LAST_COMMAND=$(tail -1 /root/.bash_history)
+    printf "%s - %s: %s\n" "${HIST_DATE}" "${SSH_USR}" "${LAST_COMMAND}" >> ${OCTO_HISTORY_FILE}
+}
+
+#################################
+# adds uci string to webgui.wlan_config for 2nd radius on port 1813 (see GMBK)
+function add_uci_string() 
+{
+    mysql webgui -e "INSERT INTO `wlan_config` VALUES (555,1,'',NULL,NULL,'set wireless.@wifi-iface[1].port=\'1813\'\nset wireless.@wifi-iface[4].port=\'1813\'');"
+}
+
+#################################
+# sets webgui.wlan_aps.command to CONFIG_SYNC (WARNING: for all APs!)
+function ap_config_sync() 
+{
+    # TODO: how about an optional argument for an id / mac???
+    mysql webgui -e "UPDATE wlan_aps SET command = \"CONFIG_SYNC\""
+}
+
+#################################
+# ap_repair <ethX> <ap-ip> <spoof-ip> <og-ip> - Fix/Repair Bootloader-bug
+function ap_repair() 
+{
+    if [[ -z $3 ]]; then
+        echo -e "\n${EMB}Usage:${W}\t\t ap_repair ${B}\"<interface>\" \"<apip>\" \"<spoof-ip>\" "
+        echo -e "${EMC}Example:${W}\t ap_repair ${C}\"eth0\" \"192.168.60.2\" \"0.0.0.6\""
+        echo -e "${W}"
+    else
+        IFACE=${1}
+        AP_IP=${2}
+        SP_IP=${3}
+        OG_IP=$(get_ip ${IFACE})
+        title "fixing ${AP_IP} on ${IFACE} with spoofing IP ${SP_IP}" "-"
+        echo -e "Applying iptables-Rules:"
+        set -x
+        iptables -t nat -I PREROUTING -i ${IFACE} -s ${AP_IP} -d ${SP_IP} -j DNAT --to-destination ${OG_IP}
+        iptables -I INPUT -i ${IFACE} -s ${AP_IP}/16 -j ACCEPT
+        iptables -I OUTPUT -d ${AP_IP}/16 -j ACCEPT
+        ip address add ${SP_IP} dev ${IFACE}
+        arping -I ${IFACE} ${AP_IP} -A -s ${SP_IP}
+        set +x
+        title "END" "-"
+    fi
+}
+
+#################################
+# ap_analyze <AP-mac> : (NOTE:not fully implemented; => use ap_repair afterwards)
+function ap_analyze()
+{
+    if [[ -z ${1} ]]; then
+        echo -e "\n${EMB}Usage:${W}\t\t ${FUNCNAME[0]} ${B}\"<MAC>\""
+        echo -e "${EMC}Example:${W}\t ${FUNCNAME[0]} ${C}\"42:a5:ef:8b:23:00\""
+        echo -e "${W}"
+    else
+        mac=${1}
+        title "Analysis for ${EMB}${mac}${C}" "="
+
+        iface=$(arp -n | grep ${mac} | awk '{print $5}')
+        ip=$(arp -n | grep ${mac} | awk '{print $1}')
+        echo -e "arpinging ${EMY}${ip}${W}... (2sec)"
+        arping -I ${iface} ${ip} -w 2
+
+        if [[ -z $iface ]]; then
+            echo -e "${EMB}${mac} ${EMR}doesn't seem to be connected."
+            echo -e "${EMB}Ethtool output:"
+            echo -e "${W}LINK on eth0: $(detect_link eth0)"
+            echo -e "${W}LINK on eth1: $(detect_link eth1)"
+            echo -e "${W}LINK on eth2: $(detect_link eth2)"
+        else            
+            title "${mac} has ${ip} on ${iface}" "."
+            echo -e "Do you wanna start a tcpdump?(y/n)"
+            read choice
+            case $choice in
+                "y" )
+                    tcpdump -eni ${iface} | grep -v GRE | grep ${mac} | head -5
+                ;;
+            esac
+            echo -e "Do you wanna fix this AP?(y/n)"
+            read choice
+            case $choice in
+                "y" )
+                    echo -e "finding IP to spoof (this takes some seconds)..."
+                    tcp_data=$(tcpdump -leni ${iface} host ${ip} and arp | head -1)
+                    if [[ -z ${tcp_data} ]]; then
+                        echo -e "Sorry no IP found."
+                    else
+                        echo -e "TCP Data was: ${EMC}${tcp_data}${W}"
+                        spoof_ip=$(echo ${tcp_data} | grep -Po 'who-has (\d+\.){4}' | cut -f 2)
+                        echo -e "Spoof IP found: ${spoof_ip}, hope this is correct..."
+                        ap_repair ${iface} ${ap_ip} ${spoof_ip}
+                    fi
+                ;;
+            esac
+        fi
+        title "END" "="
+    fi
+}
+
+#################################
+# AH: fun byod_enable -> menu to enable byod
+function byod_enable()
+{
+    webserver='"'nginx'"'
+    vorhanden=$(cat /octo/etc/octonet.conf | grep -n BYOD_IF | head -1)
+
+    echo -en "Byod-netze: "; printnetIP; echo "Bitte eines der genannten Netzes als BYOD Netz angeben"
+    read netz
+    netz='"'$netz'"'
+    echo $netz
+    echo "noch eins ? (y oder n)"
+
+    read abfrage
+
+    while [ "$abfrage" == "y" ]
+    do
+        echo "Bitte das nachste Netz eingeben"
+        read netz2
+        if [[ "$netz" == *"$netz2"* ]]
+        then
+            echo "hast du bereits!"
+        else
+            netz="$netz "'"'$netz2'"'
+        fi
+        echo "Noch eins ? (y oder n)"
+        read abfrage
+    done
+
+    echo "Folgende Netze werden eingetragen:"
+    echo "$netz"
+
+    if [ "$vorhanden" ==  "" ]
+    then
+        sed -i "\$aBYOD_IF=(  ${netz}  )" /octo/etc/octonet.conf
+    else
+        backendzeile=$(cat /octo/etc/octonet.conf | grep -n BYOD_IF | cut -d: -f1 | head -1)
+
+        sed -i '/BYOD_IF=/d' /octo/etc/octonet.conf
+
+        zeilenanzahl=$(wc -l /octo/etc/octonet.conf | cut -f1 -d ' ')
+
+        if [ "$backendzeile" -lt "$zeilenanzahl" ]
+        then
+            sed -i "${backendzeile}"iBYOD_IF="($netz)" /octo/etc/octonet.conf
+        else
+            sed -i "\$a"BYOD_IF="($netz)" /octo/etc/octonet.conf
+        fi
+    fi	
+
+    vorhanden=$(cat /octo/etc/octonet.conf | grep -n byod_backend | head -1)
+    echo "bitte die backendpage eingeben (Z.b. https://hostname.des.snvi)"
+    read backendpage
+
+    if [ "$vorhanden" ==  "" ]
+    then
+        sed -i "\$abyod_backend="'"'${backendpage}'"'  /octo/etc/octonet.conf
+    else
+        backendzeile=$(cat /octo/etc/octonet.conf | grep -n byod_backend | cut -d: -f1 | head -1)
+        echo $backendzeile
+        sed -i '/byod_backend=/d' /octo/etc/octonet.conf
+        sed -i "${backendzeile}"ibyod_backend='"'"${backendpage}"'"' /octo/etc/octonet.conf
+    fi
+
+    servicerange1=$(cat /octo/etc/services.conf | grep -n "SERVICES=(" | head -1 | cut -d: -f1)
+    servicerange2=$( cat /octo/etc/services.conf | grep -n ")" | head -1 | cut -d: -f1)
+
+    if [ "$servicerange1" -lt "$servicerange2" ]
+    then
+        nginxvorhanden=$(cat /octo/etc/services.conf | grep nginx)
+        if [ "$nginxvorhanden" == "" ]
+        then
+            sed -i "${servicerange2}"i"\   \ ${webserver}" /octo/etc/services.conf
+            echo "DAS WAR ERFOLGREICH"
+        else
+            echo "nginx Eintrag in servcies.conf bereits vorhanden"
+        fi
+    else
+        echo "fehler"
+    fi
+
+    octo_newconf -gi
+    octo_newconf -e
+    sh /octo/bin/rc.d/populate_runlevel
+    rc
+    squid -k reconfigure
+}
+
+#################################
+# ssl-insert <url> - adds <url> to ssl_white.txt (see alias: sslw)
+function ah_whitelist()
+{
+    echo "Bitte gib die 2nd-Level-Domain der URL für die Whitelist ein - z.B. bei 'www.wikipedia.de' nur wikipedia:";
+    read eingabe_domain;
+    mysql webgui -e "select p_id, profile_name from Profile order by p_id";
+    echo "bitte eine P_id wählen eine oder mehre P_ids angeben und mit ggf. mit Kommas abtrennen";
+    echo "z.b. 23,25,28,120 ";
+    echo "z.b. 25";
+    read profilid;
+    ids=$(echo $profilid | tr "," "\n");
+    check="$(cat /octo/etc/proxy.d/black/db/octo/ssl_white.txt | grep $eingabe_domain)";
+    if [ "$check" == "" ]; then
+        ssldomain="$(echo $eingabe_domain | cut -d \. -f1)";
+        echo $ssldomain;
+        echo "$ssldomain".de >> /octo/etc/proxy.d/black/db/octo/ssl_white.txt;
+        echo "$ssldomain".com >> /octo/etc/proxy.d/black/db/octo/ssl_white.txt;
+        squid -k reconfigure;
+    fi;
+    for addr in $ids;
+    do
+        mysql webgui -e " insert into Whitelist (url,type,profile_id,is_ad_list) values ('*."$eingabe_domain".*','0',"$addr",'0')";
+    done
+}
+
+# ffs will be renewed
+function ah_ffs_rebuild()
+{
+    rm /data/octoshare/pxe/.init_pxe_env.lock;
+    sh /etc/local.d/995-init-pxe-env.start
+
+}
+
+
+#################################
+# printIP spuckt die Netze für das BYOD aus
+function printnetIP() 
+{
+		giveIPonly(){
+                cat /etc/octo/octonet.conf | grep -v ^# | grep -v '^;' | grep -v '^$' | cut -d "=" -f 1 | grep -v IP | cut -d "\"" -f2 > /root/checkdefinitions
+
+                read -a WORDS -d "" < /root/checkdefinitions
+
+                for melone in "${WORDS[@]}"
+                do
+                        if [[ $melone == ")" ]];
+                        then
+                                exit
+                        else
+                                echo $melone
+                        fi
+                done;
+                }
+
+                giveIPonly | xargs echo -en | tr -s ' ' '|'; echo
+}
+
+#################################
+# print autherized User with timestamp
+function usrah()
+{
+    echo "Angemeldet war/en am:";
+    cat /var/log/squid/access.log | awk '{print $10,"at",$1,$2,$3}' | cut -d \: -f1 | sort -du | grep --colour=auto -v "\-" | grep --colour=auto -v octoservice | awk '{print $3,$4", um",$5,"Uhr,","Username",$1}' | sort -du
+}
+
+#################################
+# changes vimrc
+function set.vra()
+{
+	echo "syntax on" >> /root/.vimrc
+	echo "set expandtab" >> /root/.vimrc
+	echo "set tabstop=4" >> /root/.vimrc
+	echo "set number" >> /root/.vimrc
+	echo "set cursorline" >> /root/.vimrc
+	echo "set title" >> /root/.vimrc
+	echo "set showmatch" >> /root/.vimrc
+	echo "set smartindent" >> /root/.vimrc
+}
+
+#################################
+# Zeigt die momentante Ramauslastung und die 5 Prozesse mit der höchsten Auslastung an
+function ramload()
+{
+    DATE='date +%Y-%m-%d';
+    date;
+    free="$(free -m -t | grep Mem | awk '{print $4}')";
+    free2="$(free -m -t | grep Mem | awk '{print $5}')";
+    free=$(($free+$free2));
+    free2="$(free -m -t | grep Mem | awk '{print $6}')";
+    free=$(($free+$free2));
+    free2="$(free -m -t | grep Mem | awk '{print $7}')";
+    free=$(($free+$free2));
+    echo "ram total";
+    free2="$(free -m -t | grep Mem | awk '{print $2}')";
+    echo $free2;
+    echo "free Ram";
+    echo $free;
+    echo "used Ram";
+    free3="$(($free2-$free))";
+    echo $free3;
+     > /root/ram2.txt;
+     > /root/ram2insert.txt;
+    zahler=0;
+    erstezeile=0;
+    ps aux --sort -rss | awk '{print $11}' > /root/ram2.txt;
+    while read line; do
+        line="$(echo "$line" | tr [] " ")";
+        vorhanden="$(cat /root/ram2insert.txt | grep "$line")";
+        if [ "$zahler" -lt 5 ]; then
+            if [ "$erstezeile" == "1" ]; then
+                if [ "$vorhanden" == "" ]; then
+                    echo $line >> /root/ram2insert.txt;
+                    ((zahler++));
+                fi;
+            fi;
+            if [ "$erstezeile" == "0" ]; then
+                erstezeile=1;
+            fi;
+        fi;
+    done < /root/ram2.txt;
+    while read line; do
+        echo -n "Prozess: ";
+        auslastung="$(ps aux --sort -rss | grep "$line" | head -1 | awk '{print $4}')";
+        laufzeit="$(ps aux --sort -rss | grep "$line" | head -1 | awk '{print $10}')";
+        echo $line "Ramauslastung: $auslastung % Laufzeit: $laufzeit";
+    done < /root/ram2insert.txt;
+    rm /root/ram2insert.txt;
+    rm /root/ram2.txt
+}
+
+#################################
+# flusht gesyncte AD Daten (Profile & User)
+function cleanadsync()
+{
+    ADProfile=$(mysql webgui -e "select count(*) from Profile where is_ad_profile=1" | grep -Eo '[0-9]{1,4}' );
+    ADUser=$(mysql webgui -e "select count(*) from User where is_ad_user=1" | grep -Eo '[0-9]{1,4}');
+    echo "Vorher: $ADProfile AD-Profile und $ADUser AD-User";
+    mysql webgui -e "delete from Profile where is_ad_profile=1";
+    mysql webgui -e "delete from User where is_ad_user=1";
+    rc-service add restart;
+    sleep 5;
+    ADProfile=$(mysql webgui -e "select count(*) from Profile where is_ad_profile=1" | grep -Eo '[0-9]{1,4}' );
+    ADUser=$(mysql webgui -e "select count(*) from User where is_ad_user=1" | grep -Eo '[0-9]{1,4}');
+    echo "Nachher: $ADProfile AD-Profile und $ADUser AD-User"
+}
+
+#################################
+# NTP FIX
+function ntprepair()
+{
+	sed -i -e 's/NTPCLIENT_OPTS="-s -b -u 5.9.142.54 5.9.67.110 85.10.246.226 178.63.14.131"/NTPCLIENT_OPTS="-s -b -u 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org"/'g /etc/conf.d/ntp-client 
+	sed -i -e 's/NTPCLIENT_OPTS="-s -b -u 5.9.142.54 5.9.67.110 85.10.246.226 178.63.14.131"/NTPCLIENT_OPTS="-s -b -u 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org"/'g /etc/octo/overlay.d/ntp-client 
+	rc
+
+}
+
+#################################
+# Fügt OFFICE WHITELIST Einträge in entsprechende Tabellen und Daten hinzu
+function 41_whiteliste()
+{
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.office.*","0","1","0");'
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.office.*","0","3","0");'
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.msftncsi.*","0","1","0");'
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.msftncsi.*","0","3","0");'
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.forms.office.*","0","1","0");'
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.forms.office.*","0","3","0");'
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.windowsupdate.*","0","1","0");'
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.windowsupdate.*","0","3","0");'
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.officeapps.*","0","1","0");'
+	mysql webgui -e 'insert into Whitelist (`url`,`type`,`profile_id`,`is_ad_list`) values ("*.officeapps.*","0","3","0");'
+	cat /octo/etc/proxy.d/black/db/octo/ssl_white.txt >> /root/ssl_whitetxt 
+	sleep 1
+	cat /root/ssl_whitetxt | sort -du > /octo/etc/proxy.d/black/db/octo/ssl_white.txt
+	squid -k reconfigure
+	squish-squidcache
+	pf -e
+
+}
+#################################
+# validate ip function
+function valid_ip()
+{
+    local  ip=$1
+    local  stat=1
+
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        ip=($ip)
+        IFS=$OIFS
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
+            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
+    fi
+    return $stat
+}
+################################
+# Deppenregel / Regel am Proxy vorbei in 09_noproxy
+function deppenregel()
+{
+    mask=32
+    logfile=/tmp/deppenregel.error
+    rulefile=/octo/etc/opf.d/09_NoProxy
+    if [[ -z $1 ]]; then 
+        echo "Enter IP:"
+        read ip
+    else 
+        ip=$1
+    fi 
+    
+    if [[ -n $2 ]]; then 
+        mask=$2
+    fi 
+    if valid_ip $ip; then 
+        printf "iptables -t nat -I PREROUTING -s $ip/$mask -j ACCEPT #$SSH_USR\niptables -I FORWARD -s $ip/$mask -j ACCEPT #$SSH_USR\n \n" >> $rulefile.tmp
+    else 
+        echo "Usage: deppenregel <IP> <MASK> or deppenregel <IP> without mask"
+    fi
+    pf -e &> $logfile   
+    if [ -s $logfile ]; then 
+        echo "Wrong subnet mask  or some other Rules  ... Nothing added!"
+    else 
+        cat $rulefile.tmp >> $rul${G}OKefile  
+        echo "SUCCESS"
+    fi
+
+    rm $rulefile.tmp $logfile   
+}
+
+################################
+# Whitelist gen:
+function white_gen()
+{
+    if [ $# -lt 2 ]; then 
+        echo -e "\n${EMB}Usage:${W}\t\t white_gen ${EMC}\"<URL/Linkfile>\" \"<tablenumber>\""
+        echo -e "${B}Example:${W}\t white_gen ${EMC}*.google.* 1"
+        echo -e "${B}Example:${W}\t white_gen ${EMC}/path/to/list.txt 3"
+        echo -e "\n${B}Table 1:\t ${EMC}Globale Whitelist"
+        echo -e "${B}Table 3:\t ${EMC}Globale Whitelist ohne Login"
+        echo -e "${B}Table 5:\t ${EMC}Whitelist Gästenetz"
+        echo -e "${W}"
+        return
+    fi
+
+    if test -f "$1"; then 
+        local query="INSERT INTO Whitelist (\`url\`,\`type\`,\`profile_id\`)"
+        while read line 
+        do 
+            echo "INSERT $line to $2..."
+            query_new="${query} VALUES (\"$line\",\"0\",\"$2\")"
+
+
+            mysql webgui -e "$query_new"
+        done < $1
+    else 
+        echo "INSERT $1 to $2"
+        query="${query} VALUES (\"$line\",\"0\",\"$2\")"
+        mysql webgui -e "$query"
+    fi
+}
+#################################
+# US 01 .. mayo random stuff ..
+function octo_behinderbist()
+{
+    trap '' 2
+    trap "" SIGTSTP
+    color='\E[30;40m'
+    clear
+    echo "Formating disk(s): " /dev/sd*
+    sleep 2
+    echo "Initializing..."
+    sleep 2
+    echo -ne "Are you sure you want to format these disks?(y/n): "
+    sleep 1
+    echo "Y"
+    sleep 1
+    echo "formating starts in 5 seconds"
+    sleep 1
+    echo "4 seconds"
+    sleep 1
+    echo "3 seconds"
+    sleep 1
+    echo "2 seconds"
+    sleep 1
+    echo "1 second"
+    sleep 1
+
+    for i in {1..50000}
+    do
+    echo -n -e "\033[1m${color}0\033[0m"
+    done
+    sleep 1
+    echo ""
+    echo /dev/sd* "are formatted."
+    sleep 1
+    echo "be sure to make sure you reboot to clear operating system from RAM" 
+}
+
+###################################
+# US 02 Octofanten
+function octo_fant()
+{
+    echo "                 /eeeeeeeeeee\ "
+    echo "   /RRRRRRRRRR\ /eeeeeeeeeeeee\ /RRRRRRRRRR\ "
+    echo "  /RRRRRRRRRRRR\|eeeeeeeeeeeee|/RRRRRRRRRRRR\ "
+    echo " /RRRRRRRRRRRRRR +++++++++++++ RRRRRRRRRRRRRR\ "
+    echo "|RRRRRRRRRRRRRR ############### RRRRRRRRRRRRRR| "
+    echo "|RRRRRRRRRRRRR ######### ####### RRRRRRRRRRRRR| "
+    echo " \RRRRRRRRRRR ######### ######### RRRRRRRRRR/ "
+    echo "   |RRRRRRRRR ########## ######## RRRRRRRR| "
+    echo "  |RRRRRRRRRR ################### RRRRRRRRR| "
+    echo "               ######     ###### "
+    echo "               #####       ##### "
+    echo "               #nnn#       #nnn#"
+
+
+}
+
+###################################
+# Check databases if stored procedures and functions are complete
+check_proc_func()
+{
+   # ONLY TOUCH HERE
+   local map_db_to_functions_25="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:6 webgui:4"
+   local map_db_to_procedures_25="ulogd:16"
+   local map_db_to_functions_28="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:6 webgui:4"
+   local map_db_to_procedures_28="ulogd:16"
+   local map_db_to_functions_31="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:6 webgui:4"
+   local map_db_to_procedures_31="ulogd:16 webgui:2"
+   local map_db_to_functions_32="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:6 webgui:4"
+   local map_db_to_procedures_32="ulogd:16 webgui:2"
+   local map_db_to_functions_33="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:6 webgui:4"
+   local map_db_to_procedures_33="ulogd:16 webgui:2"
+   local map_db_to_functions_34="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:6 webgui:4"
+   local map_db_to_procedures_34="ulogd:16 webgui:2"
+   local map_db_to_functions_35="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:6 webgui:4"
+   local map_db_to_procedures_35="ulogd:16 webgui:2"
+   local map_db_to_functions_36="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:6 webgui:4"
+   local map_db_to_procedures_36="ulogd:16 webgui:2"
+   local map_db_to_functions_37="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:6 webgui:4"
+   local map_db_to_procedures_37="ulogd:16 webgui:2"
+   local map_db_to_functions_38="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:7 webgui:4"
+   local map_db_to_procedures_38="ulogd:16 webgui:2"
+   local map_db_to_functions_39="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:7 webgui:4"
+   local map_db_to_procedures_39="ulogd:16 webgui:2"
+   local map_db_to_functions_40="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 ulogd:7 webgui:4"
+   local map_db_to_procedures_40="ulogd:16 webgui:3"
+   local map_db_to_functions_41="contentfilter:1 mysql:1 octofax:1 octolog:1 openvpn:1 sys:22 ulogd:7 webgui:3"
+   local map_db_to_procedures_41="sys:26 ulogd:16 webgui:3"
+   local map_db_to_functions_42="contentfilter:1 octofax:1 octolog:1 openvpn:1 sys:22 webgui:4"
+   local map_db_to_procedures_42="sys:26 webgui:3"
+   local map_db_to_functions_43="contentfilter:1 octofax:1 octolog:1 openvpn:1 sys:22 webgui:4"
+   local map_db_to_procedures_43="sys:26 webgui:3"
+   local map_db_to_functions_44="contentfilter:1 octofax:1 octolog:1 openvpn:1 sys:22 webgui:4"
+   local map_db_to_procedures_44="sys:26 webgui:3"
+
+   # DON'T TOUCH EXCEPT YOU KNOW WHAT YOU ARE DOING
+   local octo_version="`cat /octo/sys/octogate-release | sed -e 's/3\.0\.//g'`"
+   local map_db_to_functions="map_db_to_functions_${octo_version}"
+   local map_db_to_procedures="map_db_to_procedures_${octo_version}"
+
+   for kv in ${!map_db_to_functions}; do
+        local exp_db=$(echo ${kv%:*})
+        local exp_cnt=$(echo ${kv#*:})
+        local act_db=`mysql -e "SHOW DATABASES" | grep ${exp_db} | wc -l`
+        if [ ${act_db} = 1 ]; then 
+            local act_cnt=`mysql -e "SHOW FUNCTION STATUS WHERE db = '${exp_db}'" | grep FUNCTION | wc -l`
+                if [ ${exp_cnt} = ${act_cnt} ]; then
+		            if [ "${1}" = "full" ]; then
+                       echo -e "${G}OK ${W}functions in database ${exp_db} ${act_cnt}/${exp_cnt}"
+                    fi
+                else
+                    echo -e "${R}ERROR ${W}functions in database ${exp_db} ${act_cnt}/${exp_cnt}"
+                fi
+        fi
+   done
+
+   for kv in ${!map_db_to_procedures}; do
+        local exp_db=$(echo ${kv%:*})
+        local exp_cnt=$(echo ${kv#*:})
+        local act_db=`mysql -e "SHOW DATABASES" | grep ${exp_db} | wc -l`
+        if [ ${act_db} = 1 ]; then
+                local act_cnt=`mysql -e "SHOW PROCEDURE STATUS WHERE db = '${exp_db}'" | grep PROCEDURE | wc -l`
+                if [ ${exp_cnt} = ${act_cnt} ]; then
+		    if [ "${1}" = "full" ]; then 
+                       echo -e "${G}OK ${W}procedures in database ${exp_db} ${act_cnt}/${exp_cnt}"
+		    fi
+                else
+                    echo -e "${R}ERROR ${W}procedures in database ${exp_db} ${act_cnt}/${exp_cnt}"
+                fi
+        else
+            echo -e "${R}ERROR ${W}database ${exp_db} missing"
+        fi
+   done
+}
+
+
+#################################
+# TODO: define variables and add an interactive menu
+#function gen_pfx() 
+#{
+    #openssl pkcs12 -export -out "certificate_combined.pfx" -inkey "private.key" -in "certificate.crt" -certfile ca_bundle.crt
+#}
+
+
+##########################
+#   SET USEFUL ALIASES   #
+##########################
+alias alhelp="mrhelp | grep -A 200 ALIASES | egrep '(FUNCTIONS|ALIASES|suh|checkSNV|printnetIP|printGrowth|printVoucher|tsesski|unhash|usrah|'set.vra'|getVersionLMZ|END)'| grep -v alhelp"
+alias ustour="mrhelp | grep -A 200 FUNCTIONS | egrep '(octo_fant|octo_behinderbist|octo_joke)' | grep -v ustour"
+alias ahhelp="mrhelp | grep -A 100 FUNCTIONS | egrep '(FUNCTIONS|ah_ffs_rebuild|ahrepeat|ah_whitelist|byod_enable|ramload|END)'| grep -v alhelp"
+alias a5ps="watch -n 2 -d \"mysql webgui -e 'SELECT * FROM wlan_aps'\""
+alias addchk="rc-update del add; rc; perl /octo/bin/daemon/add.pl -v -d"
+alias aparp="arp -n | grep 42:a5"
+alias aps="mysql webgui -e 'SELECT * FROM wlan_aps'"
+alias arpduplcheck="arp -n | awk {'print $1'}|uniq -c"
+alias arpflush="ip -s -s neigh flush all"
+alias cdetc="cd /etc/"
+alias cdlg="cd /var/log/"
+alias cdocto="cd /octo"
+alias cdvpn="cd /etc/openvpn"
+alias cddmp="cd /.var_ro/vendor/lib/mysql_vanilla_dumps"
+alias date='date +"%Y%m%d%H%M"'
+alias e0dmp="tcpdump -ni eth0"
+alias e1dmp="tcpdump -ni eth1"
+alias e2dmp="tcpdump -ni eth2"
+alias e3dmp="tcpdump -ni eth3"
+alias ff="find * | grep"
+alias gr_2408="grep -P '192\.168\.(3([2-9])|(4[0-7]))'"
+alias gr_2409="grep -P '192\.168\.(4([8-9])|(5[0-9])|(6[0-3]))'"
+alias gr_2410="grep -P '192\.168\.(6([4-9])|(7[0-9]))'"
+alias gr_err="grep -Pi 'critical|error|crash|failed|panic'"
+alias unhash="grep -v ^# | grep -v '^;' | grep -v '^$'"
+alias gr_whatsapp="tail -f /var/log/security/pf.log | grep -P 'DPT\=(3478|40020|57923|4244|5222|5223|5228|5242|5060|5064)'"
+alias hpo="htop"
+alias octo_history="vi ${OCTO_HISTORY_FILE}"
+alias iotst="time sh -c \"dd if=/dev/zero of=ddfile bs=8k count=250000 && sync\"; rm ddfile"
+alias ipforw="iptables -xvn -L PF_FORWARD"
+alias ipgrp="iptables-save | grep"
+alias ipinto="iptables -xvn -L PF_INTOCTO"
+alias ipsp='iptables-save -c | grep -v "\[0:0\]"'
+alias l="ls -aslh"
+alias lgmsg="tail -f /var/log/messages"
+alias lgpf="tail -f /var/log/security/pf.log"
+alias lgs="tail -f /var/log/squid/access.log"
+alias lgmail="tail -f /var/log/mail.log | grep -Pv 'foo|bar|ltd|127.0.0.1'"
+alias lgsar="sar -r -f"
+alias lgtine="tail -f /var/log/lighttpd/tine.log"
+alias lgvcli="tail -f /var/log/openvpn/openvpn.client.log"
+alias lgvserv="tail -f /var/log/openvpn/openvpn.server.log"
+alias lsmnt="mount | column -t"
+alias mmusrs="mysql webgui -e \"SELECT * FROM User WHERE mixed_mode=1\""
+alias mrenameadmin="mysql webgui -e \"UPDATE User SET username='octoadmin' WHERE username='admin'\""
+alias mshowwhitelist="mysql webgui -e \"SELECT * FROM Whitelist\""
+alias mtruncatevoucher="mysql webgui -e \"TRUNCATE TABLE ExtraLogin\""
+alias musrs="mysql webgui -e \"SELECT * FROM User\""
+alias voucher="mysql webgui -e 'SELECT ExtraLogin.*, User.username  FROM ExtraLogin LEFT JOIN User ON user_id = u_id'"
+alias apconfig="mysql webgui -e \"SELECT * FROM wlan_config\""
+alias spptst="curl -x 127.0.0.1:8080 http://speedtest.tele2.net/10GB.zip > /dev/null"
+alias sptst="curl http://speedtest.tele2.net/10GB.zip > /dev/null"
+alias sqinfo="squidclient mgr:info"
+alias sqrec="squid -k reconfigure"
+alias sl="ls --color=auto"
+alias ssh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+alias sslw="vi /octo/etc/proxy.d/black/db/octo/ssl_white.txt; squid -k reconfigure"
+alias t0dmp="tcpdump -ni tun0"
+alias t1dmp="tcpdump -ni tun1"
+alias t2dmp="tcpdump -ni tun2"
+alias tf="tail -f"
+alias tmux="history -a;tmux -f /tmp/.tmux.conf new-session -d 'bash --rcfile /tmp/.bashrc_temp'\; attach"
+alias ulog2wipe="mysql < /.var_ro/vendor/lib/mysql_vanilla_dumps/ulogd/00-schema.sql; sed -i '/ulog2/d' /var/log/mysql/mysqld.err"
+alias vi="vim -c \":color desert\""
+alias vim="vim -c \":color delek\""
+alias vmm="vi /var/log/messages"
+alias vopfd="vi /etc/octo/opf.d/00_defaults"
+alias wanip='dig +short myip.opendns.com @resolver1.opendns.com'
+alias wget='wget --no-check-certificate'
+alias paux='ps aux | grep -i'
+alias tcpdap='tcpdump -ni eth0 ether host'
+alias enable_guest_dbg='touch /tmp/GUEST_DBG'
+
+# TODO:
+# =====
+# iptables -I INPUT -i tun0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 128
+# iptables -I INPUT -i tun0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 600
+# iptables -I OUTPUT -o tun0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 600
+# iptables -t nat -I POSTROUTING -o tun2 -j MASQUERADE
+# iptables -t nat -I PREROUTING -i eth0 -j ACCEPT
+# iptables -I FORWARD -i eth0 -j ACCEPT
+#
+# alias lsfsk="ls -lahS \$\(find \/ -type f -size +10000k\)"
+
+### OPTIONAL ###
+# Make bash behave like vim
+# set -o vi
+
+# display info after login
+mrinfo
+
+export PROMPT_COMMAND="history -a;history -r; write_history"
+
+echo -e "Entering /var/log ..."
+cd /var/log/
+# next line deaktives pause funktion, that way u can now use STRG + S für insert search,..
+# inverted to STRG + R .. TEST IT :=)
+stty -ixon
