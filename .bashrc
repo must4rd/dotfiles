@@ -22,7 +22,8 @@ alias grep='grep --color=auto'
 alias nitrogen='nitrogen /home/must4rd/Pictures'
 alias mount='sudo mount'
 alias umount='sudo umount'
-
+alias updatedb='sudo updatedb'
+alias keyyaourt='gpg --recv-keys'
 PS1='[\u@\h \W]\$ '
 # My default editor is nano. I don't even able to find exit button in vim :D
 export EDITOR='vim'

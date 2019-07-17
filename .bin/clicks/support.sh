@@ -1,7 +1,7 @@
 #!/bin/bash
 
 xdotool mousemove 3250 280 click 1
-sleep .5
+sleep .1
 # xdotool mousemove 4250 180 click 1
 # sleep .1
 xdotool mousemove 4250 180 click 1
