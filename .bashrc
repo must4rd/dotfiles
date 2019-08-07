@@ -24,6 +24,7 @@ alias mount='sudo mount'
 alias umount='sudo umount'
 alias updatedb='sudo updatedb'
 alias keyyaourt='gpg --recv-keys'
+alias openvpn='sudo openvpn'
 PS1='[\u@\h \W]\$ '
 # My default editor is nano. I don't even able to find exit button in vim :D
 export EDITOR='vim'
@@ -52,3 +53,4 @@ RANGER_LOAD_DEFAULT_RC=FALSE
 
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on'
 export _JAVA_AWT_WM_NONREPARENTING=1
+export QT_QPA_PLATFORMTHEME=gtk2

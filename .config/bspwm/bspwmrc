@@ -49,13 +49,14 @@ bspc rule -a Xfce4-terminal desktop='^1' follow=on focus=on
 ## workspace 2 (web browsers)
 
 ## workspace 3 (file-manager)
-bspc rule -a Firefox desktop='^4' follow=on focus=on
 bspc rule -a Pidgin desktop='^3' follow=on focus=on
 bspc rule -a Vivaldi-stable desktop='^3' follow=on focus=on
 
 ## workspace 4 (text-editors)
+bspc rule -a firefox desktop='^4' follow=on focus=on
 bspc rule -a Chromium desktop='^4' follow=on focus=on
 bspc rule -a Opera desktop='^4' follow=on focus=on
+bspc rule -a Support.py desktop='^4' state=floating follow=on
 
 ## workspace 5 (graphic-utilities)
 bspc rule -a TeamViewer desktop='^5' follow=on focus=on state=floating
@@ -116,7 +117,6 @@ bspc rule -a Nitrogen state=floating follow=on
 bspc rule -a wicd-client.py state=floating follow=on
 bspc rule -a Wicd-client.py state=floating follow=on
 bspc rule -a Pythontest.py state=floating follow=on
-bspc rule -a Support.py  state=floating follow=on
 bspc rule -a keepassxc  state=floating follow=on
 
 

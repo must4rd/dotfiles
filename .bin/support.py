@@ -78,6 +78,7 @@ class MyWindow(Gtk.Window):
 if __name__ == "__main__":
     win = MyWindow()
     win.show_all()
+    win.move(3000, 350)
 
     # Start the Gtk main loop
     Gtk.main()
