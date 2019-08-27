@@ -54,3 +54,6 @@ RANGER_LOAD_DEFAULT_RC=FALSE
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on'
 export _JAVA_AWT_WM_NONREPARENTING=1
 export QT_QPA_PLATFORMTHEME=gtk2
+
+eval $(dircolors ~/.config/dircolors.txt)
+
