@@ -11,7 +11,7 @@ alias l='ls -lah'
 alias pacman='sudo pacman'
 alias klx='sh /home/must4rd/.bin/klx.sh'
 alias opsi='sh /home/must4rd/.bin/opsi.sh'
-alias ksar='java -jar /home/must4rd/Stuff/ksar/kSar.jar'
+alias ksar1='java -jar /home/must4rd/Stuff/ksar/kSar.jar'
 alias monitor='sh ~/.bin/monitor.sh >/dev/null 2>&1'
 alias arbeit='/home/must4rd/.bin/arbeit.sh'
 alias paux='ps aux | grep -i'
@@ -25,6 +25,8 @@ alias umount='sudo umount'
 alias updatedb='sudo updatedb'
 alias keyyaourt='gpg --recv-keys'
 alias openvpn='sudo openvpn'
+alias homevpn=' sudo openvpn ~/Documents/vpn/VPNConfig.ovpn'
+alias mordor='ssh -i ~/.ssh/must4rd_mordor must4rd@mordor'
 PS1='[\u@\h \W]\$ '
 # My default editor is nano. I don't even able to find exit button in vim :D
 export EDITOR='vim'
@@ -45,7 +47,9 @@ export PATH="${PATH}:$HOME/.toys"
 # Make Go apps executable
 export GOPATH="$HOME/.go"
 export GOBIN="$HOME/.go/bin"
-export PS1="\[\033[38;5;3m\]\u\[$(tput sgr0)\]\[\033[38;5;15m\] \[$(tput sgr0)\]\[\033[38;5;4m\]\W\[$(tput sgr0)\]\[\033[38;5;15m\] \\$ \[$(tput sgr0)\]"
+#export PS1="\[\033[38;5;3m\]\u\[$(tput sgr0)\]\[\033[38;5;15m\] \[$(tput sgr0)\]\[\033[38;5;4m\]\W\[$(tput sgr0)\]\[\033[38;5;15m\] \\$ \[$(tput sgr0)\]"
+export PS1="\[\033[38;5;3m\]\u\[$(tput sgr0)\]\[\033[38;5;15m\] \[$(tput sgr0)\]\[\033[38;5;1m\]@\h\[$(tput sgr0)\]\[\033[38;5;15m\] \[$(tput sgr0)\]\[\033[38;5;4m\]\W\[$(tput sgr0)\]\[\033[38;5;15m\] \\$ \[$(tput sgr0)\]"
+
 RANGER_LOAD_DEFAULT_RC=FALSE
 
 

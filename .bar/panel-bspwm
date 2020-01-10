@@ -234,7 +234,8 @@ while read -r line ; do
 done
 }
 
-panel_bar < "$PANEL_FIFO" | lemonbar -a 32 -O 'HDMI-1-1' -O 'DVI-I-2-1' -o -6 -n "$PANEL_WM_NAME" -g 1960x$PANEL_HEIGHT+300+8 -f "$PANEL_FONT_0" -f "$PANEL_FONT_1" -F "$COLOR_DEFAULT_FG" -B "$COLOR_DEFAULT_BG" | sh & 
+panel_bar < "$PANEL_FIFO" | lemonbar -a 32 -O 'HDMI-1' -O 'DVI-I-2-1' -o -6 -n "$PANEL_WM_NAME" -g 1960x$PANEL_HEIGHT+300+8 -f "$PANEL_FONT_0" -f "$PANEL_FONT_1" -F "$COLOR_DEFAULT_FG" -B "$COLOR_DEFAULT_BG" | sh & 
+# panel_bar < "$PANEL_FIFO" | lemonbar -a 32 -O 'HDMI-1-1' -O 'DVI-I-2-1' -o -6 -n "$PANEL_WM_NAME" -g 1960x$PANEL_HEIGHT+300+8 -f "$PANEL_FONT_0" -f "$PANEL_FONT_1" -F "$COLOR_DEFAULT_FG" -B "$COLOR_DEFAULT_BG" | sh & 
 
 wid=$(xdo id -a "$PANEL_WM_NAME")
 xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"

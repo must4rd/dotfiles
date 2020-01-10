@@ -18,9 +18,12 @@
 
 ## workspace name
 ## font needed wuncon-siji
-bspc monitor HDMI-1-1 -d '' ''
+bspc monitor HDMI-1 -d '' ''
 bspc monitor DVI-I-2-1 -d '' '' '' '' ''
-bspc monitor eDP-1-1 -d '' ''
+bspc monitor eDP-1 -d '' ''
+# bspc monitor HDMI-1-1 -d '' ''
+# bspc monitor DVI-I-2-1 -d '' '' '' '' ''
+# bspc monitor eDP-1-1 -d '' ''
 ## bspc monitor DP-2-d 'I' '' '' '' '' '' '' ''
 
 ## common bspwm configuration
@@ -118,6 +121,9 @@ bspc rule -a wicd-client.py state=floating follow=on
 bspc rule -a Wicd-client.py state=floating follow=on
 bspc rule -a Pythontest.py state=floating follow=on
 bspc rule -a keepassxc  state=floating follow=on
+bspc rule -a Guake  state=floating follow=on
+bspc rule -a guake  state=floating follow=on
+bspc rule -a twistifier-nativefier-790d57  state=floating follow=on
 
 
 
@@ -138,7 +144,7 @@ compton -b &
 
 # system tray
 pkill stalonetray
-#stalonetray &
+stalonetray &
 
 # network applet
 nm-applet &
@@ -148,8 +154,12 @@ pkill clipit
 clipit &
 
 # volume icon
-pkill volumeicon
-volumeicon &
+# pkill volumeicon
+# volumeicon &
+
+# pasystray
+pkill pasystray
+pasystray &
 
 # keybind daemon
 pkill sxhkd
@@ -168,6 +178,10 @@ feh --bg-fill ~/.wallpaper.jpg
 ## load dunst
 pkill dunst
 dunst &
+
+## guake dropdown term
+pkill guake
+guake &
 
 ## reload the cursor theme
 xsetroot -cursor_name left_ptr
