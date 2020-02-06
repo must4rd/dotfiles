@@ -13,9 +13,9 @@ pavucontrol &
 sleep 2
 bspc desktop --focus '^8'
 remmina &
-sleep 1
+sleep 1.5
 xdotool key Tab
-sleep .5
+sleep 1
 xdotool key Tab
 sleep .5
 xdotool key "Return" 

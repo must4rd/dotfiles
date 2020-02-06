@@ -18,7 +18,7 @@
 
 ## workspace name
 ## font needed wuncon-siji
-bspc monitor HDMI-1 -d '' ''
+bspc monitor HDMI-1 -d '' ''
 bspc monitor DVI-I-2-1 -d '' '' '' '' ''
 bspc monitor eDP-1 -d '' ''
 # bspc monitor HDMI-1-1 -d '' ''
@@ -33,7 +33,7 @@ bspc config split_ratio          0.5
 bspc config borderless_monocle   true
 bspc config gapless_monocle      true 
 bspc config focus_follows_pointer true
-bspc config top_padding 24
+bspc config top_padding 16
 
 
 ## color settings
@@ -112,6 +112,7 @@ bspc rule -a Gpicview state=floating follow=on
 bspc rule -a Whatsie state=floating follow=on
 bspc rule -a whatsapp-nativefier state=floating follow=on
 bspc rule -a whats-app-nativefier-d52542 state=floating follow=on
+bspc rule -a whats-app-nativefier* state=floating follow=on
 bspc rule -a clipit desktop='^3' follow=on focus=on
 bspc rule -a clipit:* desktop='^3' follow=on focus=on
 bspc rule -a *:clipit desktop='^3' follow=on focus=on
@@ -144,7 +145,7 @@ compton -b &
 
 # system tray
 pkill stalonetray
-stalonetray &
+# stalonetray &
 
 # network applet
 nm-applet &
@@ -192,7 +193,7 @@ pkill panel-bspwm2
 pkill panel-bspwm3
 pkill panel-bspwm4
 #panel-bspwm &
-testpanel &
-panel-bspwm4 &
+# testpanel &
+# panel-bspwm4 &
 
 xmodmap /home/must4rd/.Xmodmap &
