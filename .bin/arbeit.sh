@@ -15,8 +15,6 @@ bspc desktop --focus '^8'
 remmina &
 sleep 1.5
 xdotool key Tab
-sleep 1
-xdotool key Tab
 sleep .5
 xdotool key "Return" 
 sleep 2
