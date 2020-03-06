@@ -18,13 +18,23 @@
 
 ## workspace name
 ## font needed wuncon-siji
-bspc monitor HDMI-1 -d '' ''
-bspc monitor DVI-I-2-1 -d '' '' '' '' ''
-bspc monitor eDP-1 -d '' ''
-# bspc monitor HDMI-1-1 -d '' ''
-# bspc monitor DVI-I-2-1 -d '' '' '' '' ''
-# bspc monitor eDP-1-1 -d '' ''
-## bspc monitor DP-2-d 'I' '' '' '' '' '' '' ''
+bspc monitor HDMI-1 -d '' ''
+bspc monitor DVI-I-2-1 -d '' '' '' '' ''
+bspc monitor eDP-1 -d '' ''
+
+# source ~/.config/moni.ini
+## workspace name
+## font needed wuncon-siji
+# if [[ $dp2 == "0" ]]
+# then
+#     bspc monitor DP-1 -d '' '' '' '' '' '' '' '' '' ''
+# else 
+#     bspc monitor DP-1 -d '' '' '' '' ''
+#     bspc monitor DP-2 -d '' '' '' '' ''
+# fi
+# bspc monitor eDP-1 -d '' '' '' '' '' '' '' '' '' ''
+    
+
 
 ## common bspwm configuration
 bspc config border_width        1
@@ -60,6 +70,7 @@ bspc rule -a firefox desktop='^4' follow=on focus=on
 bspc rule -a Chromium desktop='^4' follow=on focus=on
 bspc rule -a Opera desktop='^4' follow=on focus=on
 bspc rule -a Support.py desktop='^4' state=floating follow=on
+bspc rule -a Jitsi desktop='^4' state=floating follow=on
 
 ## workspace 5 (graphic-utilities)
 bspc rule -a TeamViewer desktop='^5' follow=on focus=on state=floating
@@ -109,23 +120,18 @@ bspc rule -a Viewnior state=floating follow=on
 bspc rule -a feh state=floating follow=on
 bspc rule -a Thunar state=floating follow=on
 bspc rule -a Gpicview state=floating follow=on
-bspc rule -a Whatsie state=floating follow=on
-bspc rule -a whatsapp-nativefier state=floating follow=on
-bspc rule -a whats-app-nativefier-d52542 state=floating follow=on
-bspc rule -a whats-app-nativefier* state=floating follow=on
-bspc rule -a WhatsApp state=floating follow=on
+bspc rule -a whatsapp-nativefier-d52542 state=floating follow=on
 bspc rule -a clipit desktop='^3' follow=on focus=on
 bspc rule -a clipit:* desktop='^3' follow=on focus=on
 bspc rule -a *:clipit desktop='^3' follow=on focus=on
 bspc rule -a Galculator state=floating follow=on
 bspc rule -a Nitrogen state=floating follow=on
-bspc rule -a wicd-client.py state=floating follow=on
-bspc rule -a Wicd-client.py state=floating follow=on
-bspc rule -a Pythontest.py state=floating follow=on
 bspc rule -a keepassxc  state=floating follow=on
-bspc rule -a Guake  state=floating follow=on
-bspc rule -a guake  state=floating follow=on
 bspc rule -a twistifier-nativefier-790d57  state=floating follow=on
+bspc rule -a Moni.py state=floating follow=on
+bspc rule -a todoist state=floating follow=on
+bspc rule -a twistifier-nativefier-8202c0 state=floating follow=on
+
 
 
 
@@ -141,8 +147,10 @@ bspc rule -a stalonetray state=floating manage=off
 xset fp+ ~/.fonts/misc &
 
 ## reload compton
-pkill compton
-compton -b &
+# pkill compton
+pkill picom
+sleep 0.1
+picom &
 
 # system tray
 pkill stalonetray
@@ -175,7 +183,7 @@ pkill xsettingsd
 xsettingsd &
 
 ## set the wallpaper
-feh --bg-fill ~/.wallpaper.jpg
+feh --bg-fill ~/.wallpaper.png
 
 ## load dunst
 pkill dunst

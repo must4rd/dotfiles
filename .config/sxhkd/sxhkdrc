@@ -23,7 +23,7 @@ super + Return
 alt + Return
 	bspc rule -a URxvt -o state=floating; urxvt -geometry 100x30+1780+580	
 ctrl + Return
-	bspc rule -a URxvt -o state=floating; urxvt -geometry 100x30+1780+80	
+	bspc rule -a URxvt -o state=floating; urxvt -geometry 100x30+1780+100	
 ctrl + alt + Return
 	bspc rule -a URxvt -o state=floating; urxvt -geometry 100x30+40+80 -e ranger &
 ## launch alternative terminal
@@ -113,7 +113,7 @@ super + f
 
 ## spit horizontal & split vertical, like in i3-gaps :D
 super + v
-	bspc node -p "~"{east,south,west,north}
+	bspc node -p "~"{south,north,west,east}
 super + b
     bspc node -n 'last.!automatic.local'	
 super + c
@@ -193,5 +193,7 @@ XF86Calculator
 super + u
     python /home/must4rd/.bin/support.py
 
-super + i 
-    sh /home/must4rd/.bin/tenpoint.sh
+# run monitor settings
+super + ctrl + m
+    python /home/must4rd/.bin/moni.py
+

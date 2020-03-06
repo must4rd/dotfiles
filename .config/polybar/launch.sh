@@ -10,9 +10,14 @@ killall -q polybar
 #while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
 
 # Launch bar1 and bar2
-
 if type "xrandr" > /dev/null; then
-  for m in $(xrandr --query | grep " connected" | cut -d" " -f1); do
+  for m in $(xrandr --query | grep " connected" | grep -i primary | cut -d" " -f1); do
+    MONITOR=$m polybar --reload mainbar-bspwm -c ~/.config/polybar/config.ini &
+  done
+fi
+sleep 1
+if type "xrandr" > /dev/null; then
+  for m in $(xrandr --query | grep " connected" | grep -v primary |cut -d" " -f1); do
     MONITOR=$m polybar --reload mainbar-bspwm -c ~/.config/polybar/config.ini &
   done
 fi

@@ -37,6 +37,7 @@ export PATH="${PATH}:$HOME/.bar"
 # Make ~/.bin folder executable
 export PATH="${PATH}:$HOME/.bin"
 export PATH="${PATH}:$HOME/.bin/clicks"
+export PATH="${PATH}:$HOME/.bin/twist"
 export PATH="${PATH}:$HOME/.gem"
 export PATH="${PATH}:/home/must4rd/.gem/ruby/2.6.0/bin"
 export PATH="${PATH}:$HOME/.bin/twist"
@@ -58,7 +59,7 @@ RANGER_LOAD_DEFAULT_RC=FALSE
 
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on'
 export _JAVA_AWT_WM_NONREPARENTING=1
-export JAVA_HOME="/usr/lib/jvm/java-10-openjdk"
+export JAVA_HOME="/usr/lib/jvm/java-8-openjdk"
 export QT_QPA_PLATFORMTHEME=gtk2
 
 eval $(dircolors ~/.config/dircolors.txt)

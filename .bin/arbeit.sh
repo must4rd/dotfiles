@@ -28,3 +28,6 @@ sleep 2
 xdotool key "Return"
 bspc desktop --focus '^1'
 xmodmap /home/must4rd/.Xmodmap
+Jitsi &
+twistifier &
+todoist &
